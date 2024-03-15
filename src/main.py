@@ -1,8 +1,11 @@
-from src.userinteraction import user_interaction
+from src.interface import interface
 
 
 def main():
-    user_interaction()
+    print("Начинается работа с базой данных 'employers_vacancies_hh' "
+          "работодателей и вакансий, полученных с сайта hh.ru")
+    input("Для начала работы нажмите Enter")
+    interface()
 
 
 if __name__ == '__main__':
