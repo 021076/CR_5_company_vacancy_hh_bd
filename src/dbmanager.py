@@ -1,13 +1,16 @@
 import psycopg2
 
+from src.config import config
+
 
 class DBManager:
     """Метод для работы с базоми данных в СУБД PostgreSQL"""
+    params = config()
 
     @staticmethod
     def create_db(db_name: str):
         """Метод создания базы данных"""
-        conn_params = psycopg2.connect(host="127.0.0.1", user="postgres", password="bd_pyt", client_encoding="utf-8")
+        conn_params = psycopg2.connect(**config())
         cursor = conn_params.cursor()
         # автокоммит
         conn_params.autocommit = True
@@ -15,7 +18,7 @@ class DBManager:
             # команда для создания базы данных
             cursor.execute("CREATE DATABASE " + db_name)
             print(f"\nБаза данных {db_name} успешно создана")
-        except psycopg2.ProgrammingError as err:
+        except psycopg2.Error as err:
             print(err)
         finally:
             cursor.close()
@@ -24,14 +27,14 @@ class DBManager:
     @staticmethod
     def create_table(db_name: str, table_name: str, param_table: str):
         """Метод для создания таблицы базы данных"""
-        conn_params = psycopg2.connect(host="127.0.0.1", user="postgres",
-                                       password="bd_pyt", database=db_name, client_encoding="utf-8")
+        conn_params = psycopg2.connect(**DBManager.params)
+        DBManager.params.update({'dbname': db_name})
         cursor = conn_params.cursor()
         conn_params.autocommit = True
         try:
             cursor.execute(f"CREATE TABLE {table_name} ({param_table})")
             print(f"Таблица {table_name} успешно создана")
-        except psycopg2.ProgrammingError as err:
+        except psycopg2.Error as err:
             print(err)
         finally:
             cursor.close()
@@ -40,14 +43,14 @@ class DBManager:
     @staticmethod
     def insert_table(db_name: str, table_name: str, param_insert):
         """Метод для наполнения таблицы базы данных"""
-        conn_params = psycopg2.connect(host="127.0.0.1", database=db_name, user="postgres",
-                                       password="bd_pyt", client_encoding="utf-8")
+        conn_params = psycopg2.connect(**DBManager.params)
+        DBManager.params.update({'dbname': db_name})
         cursor = conn_params.cursor()
         conn_params.autocommit = True
         val = ("%s, " * len(param_insert))[:-2]
         try:
             cursor.execute(f"INSERT INTO {table_name} VALUES ({val})", param_insert)
-        except psycopg2.ProgrammingError as err:
+        except psycopg2.Error as err:
             print(err)
         finally:
             cursor.close()
@@ -56,14 +59,14 @@ class DBManager:
     @staticmethod
     def drop_bd(db_name: str):
         """Метод для удаления базы данных"""
-        conn_params = psycopg2.connect(host="127.0.0.1", database="postgres", user="postgres",
-                                       password="bd_pyt", client_encoding="utf-8")
+        conn_params = psycopg2.connect(**config())
+        config().update({'dbname': "postgres"})
         cursor = conn_params.cursor()
         conn_params.autocommit = True
         try:
             cursor.execute(f"DROP DATABASE {db_name} with(Force)")
             print(f"База данных {db_name} удалена")
-        except psycopg2.ProgrammingError as err:
+        except psycopg2.Error as err:
             print(err)
         finally:
             cursor.close()
@@ -79,7 +82,7 @@ class DBManager:
     #     try:
     #         cursor.execute("DROP TABLE " + table_name + " CASCADE")
     #         print(f"Таблица {table_name} в базу данных {db_name} удалена")
-    #     except psycopg2.ProgrammingError as err:
+    #     except psycopg2.Error as err:
     #         print(err)
     #     finally:
     #         cursor.close()
@@ -94,7 +97,7 @@ class DBManager:
     #     conn_params.autocommit = True
     #     try:
     #         cursor.execute(f"TRUNCATE TABLE {table_name} CASCADE")
-    #     except psycopg2.ProgrammingError as err:
+    #     except psycopg2.Error as err:
     #         print(err)
     #     finally:
     #         cursor.close()
@@ -104,8 +107,8 @@ class DBManager:
     def db_exists(db_name: str):
         """Проверка, что база данных существует"""
         try:
-            psycopg2.connect(host="127.0.0.1", database=db_name, user="postgres",
-                             password="bd_pyt", client_encoding="utf-8")
+            DBManager.params.update({'dbname': db_name})
+            psycopg2.connect(**DBManager.params)
             return True
         except:
             return False
@@ -113,8 +116,8 @@ class DBManager:
     @staticmethod
     def get_count_table(db_name: str, table_name: str):
         """Проверка наличия записей в таблице"""
-        conn_params = psycopg2.connect(host="127.0.0.1", database=db_name, user="postgres",
-                                       password="bd_pyt", client_encoding="utf-8")
+        conn_params = psycopg2.connect(**DBManager.params)
+        DBManager.params.update({'dbname': db_name})
         try:
             with conn_params:
                 with conn_params.cursor() as cursor:
@@ -127,8 +130,8 @@ class DBManager:
     @staticmethod
     def get_schema_bd(db_name: str):
         """Вывод списка всех таблиц в базе данных"""
-        conn_params = psycopg2.connect(host="127.0.0.1", database=db_name, user="postgres",
-                                       password="bd_pyt", client_encoding="utf-8")
+        conn_params = psycopg2.connect(**DBManager.params)
+        DBManager.params.update({'dbname': db_name})
         try:
             with conn_params:
                 with conn_params.cursor() as cursor:
@@ -144,8 +147,8 @@ class DBManager:
     @staticmethod
     def get_companies_and_vacancies_count():
         """Получает список всех компаний и количество вакансий у каждой компании из БД employers_vacancies_hh"""
-        conn_params = psycopg2.connect(host="127.0.0.1", database="employers_vacancies_hh", user="postgres",
-                                       password="bd_pyt", client_encoding="utf-8")
+        conn_params = psycopg2.connect(**DBManager.params)
+        DBManager.params.update({'dbname': "employers_vacancies_hh"})
         try:
             with conn_params:
                 with conn_params.cursor() as cursor:
@@ -159,8 +162,8 @@ class DBManager:
     def get_all_vacancies():
         """Получает список всех вакансий с указанием названия компании,
         названия вакансии и зарплаты и ссылки на вакансию из БД employers_vacancies_hh"""
-        conn_params = psycopg2.connect(host="127.0.0.1", database="employers_vacancies_hh", user="postgres",
-                                       password="bd_pyt", client_encoding="utf-8")
+        conn_params = psycopg2.connect(**DBManager.params)
+        DBManager.params.update({'dbname': "employers_vacancies_hh"})
         try:
             with conn_params:
                 with conn_params.cursor() as cursor:
@@ -174,8 +177,8 @@ class DBManager:
     @staticmethod
     def get_avg_salary():
         """Получает среднюю зарплату по вакансиям из БД employers_vacancies_hh"""
-        conn_params = psycopg2.connect(host="127.0.0.1", database="employers_vacancies_hh", user="postgres",
-                                       password="bd_pyt", client_encoding="utf-8")
+        conn_params = psycopg2.connect(**DBManager.params)
+        DBManager.params.update({'dbname': "employers_vacancies_hh"})
         try:
             with conn_params:
                 with conn_params.cursor() as cursor:
@@ -189,8 +192,8 @@ class DBManager:
     def get_vacancies_with_higher_salary():
         """Получает список всех вакансий, у которых зарплата выше средней
         по всем вакансиям из БД employers_vacancies_hh"""
-        conn_params = psycopg2.connect(host="127.0.0.1", database="employers_vacancies_hh", user="postgres",
-                                       password="bd_pyt", client_encoding="utf-8")
+        conn_params = psycopg2.connect(**DBManager.params)
+        DBManager.params.update({'dbname': "employers_vacancies_hh"})
         try:
             with conn_params:
                 with conn_params.cursor() as cursor:
@@ -205,9 +208,8 @@ class DBManager:
     def get_vacancies_with_keyword(word: str):
         """Получает список всех вакансий, в названии которых содержатся переданные в метод слова,
         например python из БД employers_vacancies_hh"""
-        conn_params = psycopg2.connect(host="127.0.0.1", database="employers_vacancies_hh", user="postgres",
-                                       password="bd_pyt", client_encoding="utf-8")
-
+        conn_params = psycopg2.connect(**DBManager.params)
+        DBManager.params.update({'dbname': "employers_vacancies_hh"})
         try:
             with conn_params:
                 with conn_params.cursor() as cursor:
